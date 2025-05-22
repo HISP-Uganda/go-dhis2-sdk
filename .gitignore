@@ -1,0 +1,30 @@
+
+# cross-compiled binaries
+dist/
+
+# Ignore any IDE-specific files or directories
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# GoLand IDE files
+*.iml
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+dhis2.openapi.json
+
+# Compiled Binary files
+*.exe
+*.out
+
+# Dependency directories
+vendor/
