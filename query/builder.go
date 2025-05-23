@@ -1,7 +1,10 @@
 package query
 
 import (
+	"fmt"
 	"net/url"
+	"strconv"
+	"strings"
 )
 
 type Params struct {

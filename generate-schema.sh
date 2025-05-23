@@ -40,30 +40,30 @@ fi
 echo "🌐 Fetching DHIS2 OpenAPI spec..."
 curl -s -u admin:district "$OPENAPI_URL" -o "$OPENAPI_FILE"
 
-# Clean previous schema
+## Clean previous schema
 echo "🧹 Cleaning old schema directory..."
 rm -rf "$SCHEMA_DIR"
 
-#Extract model names
+##Extract model names
 echo "🔍 Extracting referenced models..."
 mkdir -p "$SCHEMA_DIR"
-#grep '"$ref":"#/components/schemas/' "$OPENAPI_FILE" \
-#  | cut -d'/' -f4 \
-#  | sed 's/[",]//g' \
-#  | sort -u \
-#  > "$MODEL_LIST_FILE"
+##grep '"$ref":"#/components/schemas/' "$OPENAPI_FILE" \
+##  | cut -d'/' -f4 \
+##  | sed 's/[",]//g' \
+##  | sort -u \
+##  > "$MODEL_LIST_FILE"
+##
 #
-
 # Generate selected models
 echo "⚙️  Generating Go models..."
 java -jar "$GENERATOR_JAR" generate \
   -i "$OPENAPI_FILE" \
   -g go \
   -o "$SCHEMA_DIR" \
-  --package-name=models \
+  --package-name=schema \
   --additional-properties=enumClassPrefix=true,modelPropertyNaming=original
 
-# Clean non-Go files
+## Clean non-Go files
 echo "🚮 Cleaning non-Go files..."
 find "$SCHEMA_DIR" -type f ! -name '*.go' ! -name 'models.txt' -delete
 find "$SCHEMA_DIR" -type d -not -path "$SCHEMA_DIR" -exec rm -rf {} +
@@ -78,11 +78,61 @@ for file in "$SCHEMA_DIR"/model_*.go; do
   mv "$file" "$SCHEMA_DIR/$name.go"
   echo "✅ $base → $name.go"
 done
-
+#
 echo "🎉 Done: Generated models into directory $SCHEMA_DIR"
 
+echo "🛠 Patching schema.configuration with Debug, HTTPClient, UserAgent, and auth types..."
+
+CONFIG_FILE=$(find "$SCHEMA_DIR" -name 'configuration.go')
+if [ -f "$CONFIG_FILE" ]; then
+  # Ensure net/http and context are imported
+  perl -i -pe '
+    BEGIN { $added = 0 }
+    if (/^import \($/ && !$added) {
+      $added = 1;
+      $_ .= qq{    "net/http"\n    "context"\n};
+    }
+  ' "$CONFIG_FILE"
+
+  # Patch fields into Configuration struct
+  perl -0777 -i -pe '
+    s/(type Configuration struct \{.*?)(\n\})/$1
+    Host string `json:"-"`
+    Scheme string `json:"-"`
+    DefaultHeader map[string]string `json:"-"`
+    Debug bool `json:"-"`
+    UserAgent string `json:"-"`
+    HTTPClient *http.Client `json:"-"`$2/s
+  ' "$CONFIG_FILE"
+
+  # Append auth-related types and method if not already present
+  if ! grep -q 'type BasicAuth struct' "$CONFIG_FILE"; then
+    cat <<EOF >> "$CONFIG_FILE"
+
+type BasicAuth struct {
+    UserName string
+    Password string
+}
+
+type ContextKey string
+
+const (
+    ContextBasicAuth ContextKey = "basic"
+)
+
+func (c *Configuration) ServerURLWithContext(ctx context.Context, operation string) (string, error) {
+    return "", nil // Customize if needed
+}
+EOF
+  fi
+
+  echo "✅ Configuration struct patched."
+else
+  echo "❌ Configuration.go not found in $SCHEMA_DIR"
+fi
 
 echo "🧽 Formatting generated Go files..."
+perl -pi -e 's/\bAny\b/any/g' "$SCHEMA_DIR"/*.go
 
 if command -v goimports >/dev/null 2>&1; then
   goimports -w "$SCHEMA_DIR"/*.go
@@ -92,4 +142,5 @@ else
 fi
 
 echo "✅ Go files formatted."
+#
 
