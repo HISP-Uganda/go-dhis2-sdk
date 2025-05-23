@@ -2,7 +2,6 @@ package dhis2
 
 import (
 	"github.com/go-resty/resty/v2"
-	"net/url"
 )
 
 type Client struct {
@@ -14,7 +13,7 @@ type Client struct {
 
 func NewClient(url, user, pass string) *Client {
 	client := resty.New().
-		SetHostURL(url).
+		SetBaseURL(url).
 		SetBasicAuth(user, pass).
 		SetHeader("Content-Type", "application/json")
 
