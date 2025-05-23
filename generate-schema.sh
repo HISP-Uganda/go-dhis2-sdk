@@ -7,7 +7,7 @@ GENERATOR_VERSION="7.6.0"
 GENERATOR_JAR="$HOME/openapi-generator-cli.jar"
 SCHEMA_DIR="dhis2/schema"
 OPENAPI_FILE="dhis2.openapi.json"
-OPENAPI_URL="https://play.im.dhis2.org/stable-2-40-7-1/api/openapi.json"
+OPENAPI_URL="https://play.im.dhis2.org/stable-2-42-0/api/openapi.json"
 #MODEL_LIST_FILE="$SCHEMA_DIR/models.txt"
 CONFIG_JSON="generator-config.json"
 
