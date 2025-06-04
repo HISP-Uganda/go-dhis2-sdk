@@ -14,10 +14,48 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+// Config holds configuration for creating a tracker client.
+type Config struct {
+	BaseURL       string
+	Username      string
+	Password      string
+	MaxRetries    int
+	BaseDelay     time.Duration
+	RateLimit     time.Duration
+	Burst         int
+	BatchSize     int
+	FailDir       string
+	RetentionDays int
+}
+
+// NewConfigFromEnv loads client configuration from environment variables.
+func NewConfigFromEnv() Config {
+	maxRetries, _ := strconv.Atoi(os.Getenv("DHIS2_MAX_RETRIES"))
+	burst, _ := strconv.Atoi(os.Getenv("DHIS2_BURST"))
+	batchSize, _ := strconv.Atoi(os.Getenv("DHIS2_BATCH_SIZE"))
+	retentionDays, _ := strconv.Atoi(os.Getenv("DHIS2_RETENTION_DAYS"))
+	rateLimit, _ := time.ParseDuration(os.Getenv("DHIS2_RATE_LIMIT"))
+	baseDelay, _ := time.ParseDuration(os.Getenv("DHIS2_BASE_DELAY"))
+
+	return Config{
+		BaseURL:       os.Getenv("DHIS2_BASE_URL"),
+		Username:      os.Getenv("DHIS2_USERNAME"),
+		Password:      os.Getenv("DHIS2_PASSWORD"),
+		MaxRetries:    maxRetries,
+		BaseDelay:     baseDelay,
+		RateLimit:     rateLimit,
+		Burst:         burst,
+		BatchSize:     batchSize,
+		FailDir:       os.Getenv("DHIS2_FAIL_DIR"),
+		RetentionDays: retentionDays,
+	}
+}
 
 type Client struct {
 	BaseURL       string
@@ -35,6 +73,44 @@ type Client struct {
 	BatchSize     int // Optional: for batching requests
 	FailDir       string
 	RetentionDays int // Optional: number of days to retain failed batches
+}
+
+// NewClientFromConfig initializes a new tracker client using the provided configuration.
+func NewClientFromConfig(cfg Config) *Client {
+	client := resty.New().
+		SetBaseURL(cfg.BaseURL).
+		SetBasicAuth(cfg.Username, cfg.Password).
+		SetHeader("Content-Type", "application/json")
+
+	if cfg.MaxRetries == 0 {
+		cfg.MaxRetries = 3
+	}
+	if cfg.BaseDelay == 0 {
+		cfg.BaseDelay = time.Second
+	}
+	if cfg.Burst == 0 {
+		cfg.Burst = 1
+	}
+	if cfg.BatchSize == 0 {
+		cfg.BatchSize = 50
+	}
+	if cfg.FailDir == "" {
+		cfg.FailDir = "/tmp/failed_batches"
+	}
+	if cfg.RetentionDays == 0 {
+		cfg.RetentionDays = 30
+	}
+
+	return &Client{
+		Resty:         client,
+		MaxRetries:    cfg.MaxRetries,
+		BaseDelay:     cfg.BaseDelay,
+		RateLimit:     cfg.RateLimit,
+		Burst:         cfg.Burst,
+		BatchSize:     cfg.BatchSize,
+		FailDir:       cfg.FailDir,
+		RetentionDays: cfg.RetentionDays,
+	}
 }
 
 func NewClient(url, user, pass string) *Client {
@@ -370,4 +446,155 @@ func (c *Client) PollJobStatus(ctx context.Context, jobID string) (*schema.Track
 		return nil, res, fmt.Errorf("failed to decode job report: %w", err)
 	}
 	return &report, res, nil
+}
+
+// UpdateEventDataValues updates data values for a single event in DHIS2 using PUT /events/{event}/{dataElement}
+func (c *Client) UpdateEventDataValues(ctx context.Context, payload *tracker.EventUpdatePayload) error {
+	if payload == nil {
+		return errors.New("payload cannot be nil")
+	}
+	if payload.Event == "" {
+		return errors.New("event UID is required")
+	}
+	if len(payload.DataValues) == 0 {
+		return errors.New("no data values to update")
+	}
+
+	for _, dv := range payload.DataValues {
+		if *dv.DataElement == "" {
+			log.Warnf("Skipping data value with empty dataElement for event %s", payload.Event)
+			continue
+		}
+
+		url := fmt.Sprintf("/api/events/%s/%s", payload.Event, dv.DataElement)
+		body := tracker.EventUpdatePayload{
+			Event:         payload.Event,
+			Program:       payload.Program,
+			OrgUnit:       payload.OrgUnit,
+			ProgramStage:  payload.ProgramStage,
+			Status:        payload.Status,
+			TrackedEntity: payload.TrackedEntity,
+			DataValues:    []schema.TrackerDataValue{dv},
+		}
+
+		//body := map[string]string{
+		//	"value": *dv.Value,
+		//}
+
+		c.waitForRateSlot()
+		res, err := c.Resty.R().
+			SetContext(ctx).
+			SetHeader("Content-Type", "application/json").
+			SetBody(body).
+			Put(url)
+
+		if err != nil {
+			log.WithError(err).WithField("dataElement", dv.DataElement).Error("Failed to update data value")
+			return err
+		}
+
+		if res.StatusCode() != http.StatusOK && res.StatusCode() != http.StatusNoContent {
+			log.WithFields(log.Fields{
+				"status":      res.StatusCode(),
+				"event":       payload.Event,
+				"dataElement": dv.DataElement,
+				"response":    res.String(),
+			}).Error("DHIS2 rejected data value update")
+			return fmt.Errorf("failed to update data element %s for event %s", dv.DataElement, payload.Event)
+		}
+
+		log.WithFields(log.Fields{
+			"event":       payload.Event,
+			"dataElement": dv.DataElement,
+		}).Info("Updated data value")
+	}
+
+	return nil
+}
+
+// UpdateTrackedEntity updates a tracked entity in DHIS2 using PUT to either /api/trackedEntityInstances/{uid} or /api/trackedEntities/{uid}
+func (c *Client) UpdateTrackedEntity(ctx context.Context, payload *tracker.TrackedEntityUpdatePayload, program string) error {
+	if payload == nil {
+		return errors.New("payload cannot be nil")
+	}
+
+	var uid, endpoint string
+	if payload.TrackedEntityInstance != nil {
+		uid = *payload.TrackedEntityInstance
+		endpoint = "trackedEntityInstances"
+	} else if payload.TrackedEntity != nil {
+		uid = *payload.TrackedEntity
+		endpoint = "trackedEntityInstances" // or "trackedEntities" based on your API version
+	} else {
+		return errors.New("TrackedEntityInstance or TrackedEntity is required")
+	}
+
+	url := fmt.Sprintf("/api/%s/%s?program=%s", endpoint, uid, program)
+	c.waitForRateSlot()
+
+	res, err := c.Resty.R().
+		SetContext(ctx).
+		SetHeader("Content-Type", "application/json").
+		SetBody(payload).
+		Put(url)
+
+	if err != nil {
+		log.WithError(err).WithField("trackedEntityInstance", uid).Error("Failed to update tracked entity")
+		return err
+	}
+
+	if res.StatusCode() != http.StatusOK && res.StatusCode() != http.StatusNoContent {
+		log.WithFields(log.Fields{
+			"status":                res.StatusCode(),
+			"trackedEntityInstance": uid,
+			"response":              res.String(),
+		}).Error("DHIS2 rejected tracked entity update")
+		return fmt.Errorf("failed to update tracked entity %s", uid)
+	}
+
+	log.WithField("trackedEntityInstance", uid).Infof("Updated tracked entity using endpoint /api/%s", endpoint)
+	return nil
+}
+
+// DeleteTrackedEntities deletes tracked entities via the /api/tracker endpoint with importStrategy=DELETE
+func (c *Client) DeleteTrackedEntities(ctx context.Context, payload *tracker.TrackedEntityDeletePayload) (*schema.TrackerImportReport, error) {
+	if payload == nil || len(payload.TrackedEntities) == 0 {
+		return nil, errors.New("no tracked entities provided for deletion")
+	}
+
+	c.waitForRateSlot()
+	res, err := c.Resty.R().
+		SetContext(ctx).
+		SetBody(payload).
+		SetHeader("Content-Type", "application/json").
+		SetQueryParam("async", "false").
+		SetQueryParam("importStrategy", "DELETE").
+		Post("/api/tracker")
+
+	if err != nil {
+		log.WithError(err).Error("Failed to delete tracked entities")
+		return nil, err
+	}
+
+	if res.StatusCode() != http.StatusOK && res.StatusCode() != http.StatusCreated {
+		log.WithFields(log.Fields{
+			"status":   res.StatusCode(),
+			"response": res.String(),
+		}).Error("DHIS2 rejected tracked entity deletion")
+		return nil, fmt.Errorf("DHIS2 returned status %d during deletion", res.StatusCode())
+	}
+
+	var report schema.TrackerImportReport
+	if err := json.Unmarshal(res.Body(), &report); err != nil {
+		log.WithError(err).Error("Failed to parse tracker import report from deletion response")
+		return nil, fmt.Errorf("failed to parse import report: %w: Response Body: %v", err, string(res.Body()))
+	}
+
+	log.WithFields(log.Fields{
+		"deleted":  report.Stats.Deleted,
+		"ignored":  report.Stats.Ignored,
+		"imported": report.Stats.Created,
+	}).Info("Tracked entities deletion completed")
+
+	return &report, nil
 }
