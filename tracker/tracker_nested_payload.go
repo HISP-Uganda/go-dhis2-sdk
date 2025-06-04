@@ -7,14 +7,14 @@ import (
 )
 
 type Attribute struct {
-	Attribute   *string   `json:"attribute"`
-	Code        *string   `json:"code,omitempty"`
-	DisplayName *string   `json:"displayName,omitempty"`
-	CreatedAt   time.Time `json:"createdAt,omitempty"`
-	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
-	StoredBy    *string   `json:"storedBy,omitempty"`
-	ValueType   *string   `json:"valueType,omitempty"`
-	Value       *string   `json:"value"`
+	Attribute   *string    `json:"attribute"`
+	Code        *string    `json:"code,omitempty"`
+	DisplayName *string    `json:"displayName,omitempty"`
+	CreatedAt   *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+	StoredBy    *string    `json:"storedBy,omitempty"`
+	ValueType   *string    `json:"valueType,omitempty"`
+	Value       *string    `json:"value"`
 }
 
 type AsyncResponse struct {
