@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Attribute struct {
+type TrackedEntityAttribute struct {
 	Attribute   *string    `json:"attribute"`
 	Code        *string    `json:"code,omitempty"`
 	DisplayName *string    `json:"displayName,omitempty"`
@@ -88,10 +88,10 @@ type NestedPayload struct {
 
 // NestedTrackedEntity represents a tracked entity with nested enrollments.
 type NestedTrackedEntity struct {
-	Attributes        []Attribute        `json:"attributes,omitempty"`
-	Enrollments       []NestedEnrollment `json:"enrollments,omitempty"`
-	OrgUnit           string             `json:"orgUnit"`
-	TrackedEntityType string             `json:"trackedEntityType"`
+	Attributes        []TrackedEntityAttribute `json:"attributes,omitempty"`
+	Enrollments       []NestedEnrollment       `json:"enrollments,omitempty"`
+	OrgUnit           string                   `json:"orgUnit"`
+	TrackedEntityType string                   `json:"trackedEntityType"`
 }
 
 // NestedEnrollment represents an enrollment with nested attributes and events.
@@ -123,7 +123,7 @@ type NestedEvent struct {
 
 // AddAttribute appends an attribute to the tracked entity.
 func (te *NestedTrackedEntity) AddAttribute(attr, value string) *NestedTrackedEntity {
-	te.Attributes = append(te.Attributes, Attribute{
+	te.Attributes = append(te.Attributes, TrackedEntityAttribute{
 		Attribute: utils.StringPtr(attr),
 		Value:     utils.StringPtr(value),
 	})
