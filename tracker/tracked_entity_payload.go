@@ -7,7 +7,7 @@ type TrackedEntityUpdatePayload struct {
 	TrackedEntity         *string                      `json:"trackedEntity,omitempty"`
 	OrgUnit               string                       `json:"orgUnit"`
 	TrackedEntityType     string                       `json:"trackedEntityType"`
-	Attributes            []schema.AttributeValue      `json:"attributes"`
+	Attributes            []Attribute                  `json:"attributes"`
 	Relationships         []schema.TrackerRelationship `json:"relationships,omitempty"`
 }
 
