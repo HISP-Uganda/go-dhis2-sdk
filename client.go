@@ -206,7 +206,7 @@ func (c *Client) SendAggregateDataValues(ctx context.Context, payload *aggregate
 		SetContext(ctx).
 		SetBody(payload).
 		SetResult(&resp).
-		Post("/api/dataValueSets")
+		Post("/dataValueSets")
 
 	if err != nil {
 		log.WithError(err).Error("Failed to send aggregate data to DHIS2")
@@ -246,7 +246,7 @@ func (c *Client) SendTrackerPayload(ctx context.Context, payload *tracker.Nested
 			req.SetQueryParam(key, val)
 		}
 
-		res, err = req.Post("/api/tracker")
+		res, err = req.Post("/tracker")
 		if err != nil {
 			log.WithError(err).WithField("attempt", attempt).Error("Failed to send tracker payload")
 		} else if res.StatusCode() != http.StatusOK && res.StatusCode() != http.StatusCreated {
@@ -433,7 +433,7 @@ func (c *Client) PollJobStatus(ctx context.Context, jobID string) (*schema.Track
 	}
 
 	req := c.Resty.R().SetContext(ctx).SetHeader("Accept", "application/json")
-	res, err := req.Get(fmt.Sprintf("/api/tracker/jobs/%s/report", jobID))
+	res, err := req.Get(fmt.Sprintf("/tracker/jobs/%s/report", jobID))
 	if err != nil {
 		return nil, res, fmt.Errorf("failed to fetch job status: %w", err)
 	}
@@ -466,7 +466,7 @@ func (c *Client) UpdateEventDataValues(ctx context.Context, payload *tracker.Eve
 			continue
 		}
 
-		url := fmt.Sprintf("/api/events/%s/%s", payload.Event, dv.DataElement)
+		url := fmt.Sprintf("/events/%s/%s", payload.Event, dv.DataElement)
 		body := tracker.EventUpdatePayload{
 			Event:         payload.Event,
 			Program:       payload.Program,
@@ -529,7 +529,7 @@ func (c *Client) UpdateTrackedEntity(ctx context.Context, payload *tracker.Track
 		return errors.New("TrackedEntityInstance or TrackedEntity is required")
 	}
 
-	url := fmt.Sprintf("/api/%s/%s?program=%s", endpoint, uid, program)
+	url := fmt.Sprintf("/%s/%s?program=%s", endpoint, uid, program)
 	c.waitForRateSlot()
 
 	res, err := c.Resty.R().
