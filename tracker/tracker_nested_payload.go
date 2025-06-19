@@ -96,13 +96,13 @@ type NestedTrackedEntity struct {
 
 // NestedEnrollment represents an enrollment with nested attributes and events.
 type NestedEnrollment struct {
-	Attributes []TrackedEntityAttribute `json:"attributes,omitempty"`
-	EnrolledAt time.Time                `json:"enrolledAt"`
-	Events     []NestedEvent            `json:"events,omitempty"`
-	OccurredAt time.Time                `json:"occurredAt"`
-	OrgUnit    string                   `json:"orgUnit"`
-	Program    string                   `json:"program"`
-	Status     string                   `json:"status"`
+	Attributes []schema.TrackerAttribute `json:"attributes,omitempty"`
+	EnrolledAt time.Time                 `json:"enrollmentDate"`
+	Events     []NestedEvent             `json:"events,omitempty"`
+	OccurredAt time.Time                 `json:"incidentDate"`
+	OrgUnit    string                    `json:"orgUnit"`
+	Program    string                    `json:"program"`
+	Status     string                    `json:"status"`
 	// TrackedEntityType string            `json:"trackedEntityType"`
 }
 
@@ -113,11 +113,11 @@ type NestedEvent struct {
 	DataValues               []schema.TrackerDataValue `json:"dataValues,omitempty"`
 	EnrollmentStatus         string                    `json:"enrollmentStatus,omitempty"`
 	Notes                    []schema.TrackerNote      `json:"notes,omitempty"`
-	OccurredAt               time.Time                 `json:"occurredAt"`
+	OccurredAt               time.Time                 `json:"eventDate"`
 	OrgUnit                  string                    `json:"orgUnit"`
 	Program                  string                    `json:"program"`
 	ProgramStage             string                    `json:"programStage"`
-	ScheduledAt              *time.Time                `json:"scheduledAt,omitempty"`
+	ScheduledAt              *time.Time                `json:"dueDate,omitempty"`
 	Status                   string                    `json:"status"`
 }
 
