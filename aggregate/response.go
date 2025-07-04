@@ -2,6 +2,13 @@ package aggregate
 
 import "github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
 
+type AggregateSummaryResponse struct {
+	HTTPStatus     string                `json:"httpStatus"`
+	HTTPStatusCode int                   `json:"httpStatusCode"`
+	Status         string                `json:"status"`
+	Message        string                `json:"message"`
+	Response       ImportSummaryResponse `json:"response"`
+}
 type ImportSummaryResponse struct {
 	ResponseType  string               `json:"responseType"`
 	Status        string               `json:"status"`

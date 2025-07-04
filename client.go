@@ -200,7 +200,7 @@ func (c *Client) SendAggregateDataValues(ctx context.Context, payload *aggregate
 		log.WithError(err).Error("Validation failed before sending payload")
 		return nil, err
 	}
-	var resp aggregate.ImportSummaryResponse
+	var resp aggregate.AggregateSummaryResponse
 
 	res, err := c.Resty.R().
 		SetContext(ctx).
@@ -218,11 +218,11 @@ func (c *Client) SendAggregateDataValues(ctx context.Context, payload *aggregate
 			"status": res.Status(),
 			"body":   res.String(),
 		}).Error("DHIS2 returned non-200 status")
-		return &resp, fmt.Errorf("dhis2 error response: %s", res.Status())
+		return &resp.Response, fmt.Errorf("dhis2 error response: %s", res.Status())
 	}
 
-	resp.LogSummary()
-	return &resp, nil
+	resp.Response.LogSummary()
+	return &resp.Response, nil
 }
 
 // SendTrackerPayload sends a nested tracker payload to DHIS2 with optional query parameters.
