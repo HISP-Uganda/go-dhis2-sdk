@@ -1,9 +1,10 @@
 package tracker
 
 import (
+	"time"
+
 	"github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
 	"github.com/HISP-Uganda/go-dhis2-sdk/utils"
-	"time"
 )
 
 type TrackedEntityAttribute struct {
@@ -97,9 +98,9 @@ type NestedTrackedEntity struct {
 // NestedEnrollment represents an enrollment with nested attributes and events.
 type NestedEnrollment struct {
 	Attributes []schema.TrackerAttribute `json:"attributes,omitempty"`
-	EnrolledAt time.Time                 `json:"enrollmentDate"`
+	EnrolledAt time.Time                 `json:"enrolledAt"`
 	Events     []NestedEvent             `json:"events,omitempty"`
-	OccurredAt time.Time                 `json:"incidentDate"`
+	OccurredAt time.Time                 `json:"occurredAt"`
 	OrgUnit    string                    `json:"orgUnit"`
 	Program    string                    `json:"program"`
 	Status     string                    `json:"status"`
@@ -113,7 +114,7 @@ type NestedEvent struct {
 	DataValues               []schema.TrackerDataValue `json:"dataValues,omitempty"`
 	EnrollmentStatus         string                    `json:"enrollmentStatus,omitempty"`
 	Notes                    []schema.TrackerNote      `json:"notes,omitempty"`
-	OccurredAt               time.Time                 `json:"eventDate"`
+	OccurredAt               time.Time                 `json:"occurredAt"`
 	OrgUnit                  string                    `json:"orgUnit"`
 	Program                  string                    `json:"program"`
 	ProgramStage             string                    `json:"programStage"`
