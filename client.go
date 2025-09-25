@@ -5,11 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/HISP-Uganda/go-dhis2-sdk/aggregate"
-	"github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
-	"github.com/HISP-Uganda/go-dhis2-sdk/tracker"
-	"github.com/go-resty/resty/v2"
-	log "github.com/sirupsen/logrus"
 	"io/fs"
 	"net/http"
 	"os"
@@ -18,6 +13,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/HISP-Uganda/go-dhis2-sdk/aggregate"
+	"github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
+	"github.com/HISP-Uganda/go-dhis2-sdk/tracker"
+	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 // Config holds configuration for creating a tracker client.
@@ -232,7 +233,10 @@ func (c *Client) SendTrackerPayload(ctx context.Context, payload *tracker.Nested
 	var importRes schema.TrackerImportReport
 	var asyncRes tracker.AsyncResponse
 
-	isAsync := strings.EqualFold(queryParams["async"], "true")
+	isAsync := false
+	if queryParams != nil {
+		isAsync = strings.EqualFold(queryParams["async"], "true")
+	}
 
 	for attempt := 1; attempt <= c.MaxRetries; attempt++ {
 		c.waitForRateSlot()
