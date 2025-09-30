@@ -20,7 +20,7 @@ type TrackedEntityAttribute struct {
 
 type AsyncResponse struct {
 	Response *struct {
-		ID string `json:"id"`
+		ID *string `json:"id"`
 	} `json:"response,omitempty"`
 	Name                     *string `json:"name,omitempty"`
 	ID                       *string `json:"id,omitempty"`
@@ -31,8 +31,8 @@ type AsyncResponse struct {
 
 // GetJobID returns the job ID from the async response.
 func (r *AsyncResponse) GetJobID() string {
-	if r.Response != nil && r.Response.ID != "" {
-		return r.Response.ID
+	if r.Response != nil && *r.Response.ID != "" {
+		return *r.Response.ID
 	} else if r.ID != nil {
 		return *r.ID
 	}
