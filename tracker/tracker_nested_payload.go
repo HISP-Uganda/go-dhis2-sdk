@@ -18,6 +18,7 @@ type TrackedEntityAttribute struct {
 	Value       *string    `json:"value"`
 }
 
+// AsyncResponse represents the response from a DHIS2 async tracker import job.
 type AsyncResponse struct {
 	Response *struct {
 		ID *string `json:"id"`
