@@ -265,8 +265,8 @@ func (c *Client) SendTrackerPayload(ctx context.Context, payload *tracker.Nested
 					return nil, res, fmt.Errorf("failed to parse async response: %w", err)
 				}
 				jobID := ""
-				if asyncRes.Response != nil && asyncRes.Response.ID != "" {
-					jobID = asyncRes.Response.ID
+				if asyncRes.Response != nil && *asyncRes.Response.ID != "" {
+					jobID = *asyncRes.Response.ID
 				} else if asyncRes.ID != nil {
 					jobID = *asyncRes.ID
 				}

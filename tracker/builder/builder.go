@@ -1,9 +1,10 @@
 package tracker
 
 import (
+	"time"
+
 	"github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
 	"github.com/HISP-Uganda/go-dhis2-sdk/tracker"
-	"time"
 )
 
 // NewNestedTrackedEntity creates a tracked entity with basic identity fields.
@@ -11,7 +12,7 @@ func NewNestedTrackedEntity(teiType, orgUnit string) *tracker.NestedTrackedEntit
 	return &tracker.NestedTrackedEntity{
 		TrackedEntityType: teiType,
 		OrgUnit:           orgUnit,
-		Attributes:        []schema.TrackerAttribute{},
+		Attributes:        []tracker.TrackedEntityAttribute{},
 		Enrollments:       []tracker.NestedEnrollment{},
 	}
 }
