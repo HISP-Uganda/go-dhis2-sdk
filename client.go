@@ -178,6 +178,62 @@ func (c *Client) Get(path string, result any, queryParams ...map[string]string) 
 	return r.Get(path)
 }
 
+func (c *Client) GetResource(path string, queryParams map[string]string) (*resty.Response, error) {
+	request := c.Resty.R()
+
+	if queryParams != nil {
+		request.SetQueryParams(queryParams)
+	}
+
+	resp, err := request.Get(path)
+	if err != nil {
+		log.WithError(err).Infof("Error when calling `GetResource`: %v", err)
+	}
+	return resp, err
+}
+
+func (c *Client) PostResource(resourcePath string, data interface{}) (*resty.Response, error) {
+	resp, err := c.Resty.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(data).
+		Post(resourcePath)
+	if err != nil {
+		log.Errorf("Error when calling `PostResource: %v`", err)
+	}
+	return resp, err
+}
+
+func (c *Client) PutResource(resourcePath string, data interface{}) (*resty.Response, error) {
+	resp, err := c.Resty.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(data).
+		Put(resourcePath)
+	if err != nil {
+		log.Errorf("Error when calling `PutResource`: %v", err)
+	}
+	return resp, err
+}
+
+func (c *Client) DeleteResource(resourcePath string) (*resty.Response, error) {
+	resp, err := c.Resty.R().
+		Delete(resourcePath)
+	if err != nil {
+		log.Errorf("Error when calling `DeleteResource`: %v", err)
+	}
+	return resp, err
+}
+
+func (c *Client) PatchResource(resourcePath string, data interface{}) (*resty.Response, error) {
+	resp, err := c.Resty.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(data).
+		Patch(resourcePath)
+	if err != nil {
+		log.Errorf("Error when calling `PatchResource`: %v", err)
+	}
+	return resp, err
+}
+
 func (c *Client) Put(path string, payload any, queryParams ...map[string]string) (*resty.Response, error) {
 	r := c.Resty.R().SetBody(payload)
 	if len(queryParams) > 0 {
