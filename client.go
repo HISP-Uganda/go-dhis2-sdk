@@ -346,7 +346,7 @@ func (c *Client) SendTrackerPayload(ctx context.Context, payload *tracker.Nested
 				return &tracker.TrackerResponse{AsyncResp: &asyncRes}, res, nil
 			} else {
 				if err := json.Unmarshal(res.Body(), &importRes); err != nil {
-					log.WithError(err).Error("Failed to parse tracker import response")
+					log.WithError(err).Errorf("Failed to parse tracker import response: %s", string(res.Body()))
 					return nil, res, fmt.Errorf("failed to parse response: %w", err)
 				}
 				if validationReport := importRes.ValidationReport; validationReport != nil {
@@ -421,7 +421,7 @@ func (c *Client) SendLegacyTrackerPayload(ctx context.Context, payload *tracker.
 				return &tracker.LegacyTrackerResponse{AsyncResponse: asyncRes}, res, nil
 			} else {
 				if err := json.Unmarshal(res.Body(), &importRes); err != nil {
-					log.WithError(err).Error("Failed to parse tracker import response")
+					log.WithError(err).Errorf("Failed to parse tracker import response: %s", string(res.Body()))
 					return nil, res, fmt.Errorf("failed to parse response: %w", err)
 				}
 				switch importRes.HttpStatusCode {
