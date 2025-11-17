@@ -51,10 +51,10 @@ type LegacyNestedPayload struct {
 
 // LegacyNestedTrackedEntity represents a tracked entity with nested enrollments.
 type LegacyNestedTrackedEntity struct {
-	Attributes        []schema.TrackerAttribute `json:"attributes,omitempty"`
-	Enrollments       []LegacyNestedEnrollment  `json:"enrollments,omitempty"`
-	OrgUnit           string                    `json:"orgUnit"`
-	TrackedEntityType string                    `json:"trackedEntityType"`
+	Attributes        []TrackedEntityAttribute `json:"attributes,omitempty"`
+	Enrollments       []LegacyNestedEnrollment `json:"enrollments,omitempty"`
+	OrgUnit           string                   `json:"orgUnit"`
+	TrackedEntityType string                   `json:"trackedEntityType"`
 }
 
 // LegacyNestedEnrollment represents an enrollment with nested attributes and events.
