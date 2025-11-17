@@ -94,6 +94,7 @@ type NestedTrackedEntity struct {
 	Enrollments       []NestedEnrollment       `json:"enrollments,omitempty"`
 	OrgUnit           string                   `json:"orgUnit"`
 	TrackedEntityType string                   `json:"trackedEntityType"`
+	TrackedEntity     *string                  `json:"trackedEntity,omitempty"`
 }
 
 // NestedEnrollment represents an enrollment with nested attributes and events.

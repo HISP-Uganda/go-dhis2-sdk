@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"github.com/HISP-Uganda/go-dhis2-sdk/aggregate"
 	"github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
 	"github.com/HISP-Uganda/go-dhis2-sdk/tracker"
+	"github.com/buger/jsonparser"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 )
@@ -183,6 +185,20 @@ func (c *Client) GetResource(path string, queryParams map[string]string) (*resty
 
 	if queryParams != nil {
 		request.SetQueryParams(queryParams)
+	}
+
+	resp, err := request.Get(path)
+	if err != nil {
+		log.WithError(err).Infof("Error when calling `GetResource`: %v", err)
+	}
+	return resp, err
+}
+
+func (c *Client) GetResourceValues(path string, queryParams url.Values) (*resty.Response, error) {
+	request := c.Resty.R()
+
+	if queryParams != nil {
+		request.SetQueryParamsFromValues(queryParams)
 	}
 
 	resp, err := request.Get(path)
@@ -657,4 +673,67 @@ func (c *Client) DeleteTrackedEntities(ctx context.Context, payload *tracker.Tra
 	}).Info("Tracked entities deletion completed")
 
 	return &report, nil
+}
+
+// SearchTrackedEntity performs a DHIS2 Tracker search for tracked entity instances
+// using one or more attribute filters.
+//
+// Args:
+//
+//	orgUnit  – Organisation unit UID.
+//	program  – Program UID.
+//	attrs    – Map of attributeUID → value. Each produces a separate
+//	           ?filter=attributeUID:operator:value query parameter.
+//	operator – DHIS2 operator (e.g. "EQ", "LIKE"). Defaults to EQ.
+//
+// Supports multiple filters simultaneously, combined with AND as per
+// DHIS2 API rules. Returns the list of matching tracked entities.
+func (c *Client) SearchTrackedEntity(
+	orgUnit string,
+	program string,
+	attrs map[string]string, // attributeUID → value
+	operator string,
+) (bool, []tracker.NestedTrackedEntity) {
+	// Must use url.Values to support multiple "filter" params
+	params := url.Values{}
+	params.Set("orgUnit", orgUnit)
+	params.Set("program", program)
+	params.Set("ouMode", "SELECTED")
+	params.Set("orgUnitMode", "SELECTED")
+
+	// Default operator = EQ
+	if operator == "" {
+		operator = "EQ"
+	}
+
+	// Add all filters as separate entries
+	for attrUID, val := range attrs {
+		filterExpr := fmt.Sprintf("%s:%s:%s", attrUID, operator, val)
+		params.Add("filter", filterExpr)
+	}
+
+	// DHIS2 endpoint
+	endpoint := "/tracker/trackedEntities"
+
+	// Use the client's method, but adapt it to accept url.Values
+	resp, err := c.GetResourceValues(endpoint, params)
+	if err != nil {
+		log.Errorf("SearchTE error calling GetResource: %v", err)
+		return false, nil
+	}
+
+	// Extract "instances" array
+	v, _, _, err := jsonparser.Get(resp.Body(), "instances")
+	if err != nil {
+		log.Errorf("SearchTE error getting instances: %v", err)
+		return false, nil
+	}
+
+	var instances []tracker.NestedTrackedEntity
+	if err := json.Unmarshal(v, &instances); err != nil {
+		log.Errorf("SearchTE unmarshal error: %v", err)
+		return false, nil
+	}
+
+	return true, instances
 }
