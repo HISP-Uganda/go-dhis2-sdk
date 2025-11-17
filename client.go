@@ -375,6 +375,94 @@ func (c *Client) SendTrackerPayload(ctx context.Context, payload *tracker.Nested
 	return nil, res, fmt.Errorf("failed to submit payload after %d attempts: %w", c.MaxRetries, err)
 }
 
+// SendLegacyTrackerPayload sends a nested tracker payload to DHIS2 with optional query parameters.
+func (c *Client) SendLegacyTrackerPayload(ctx context.Context, payload *tracker.LegacyNestedPayload, queryParams map[string]string) (*tracker.LegacyTrackerResponse, *resty.Response, error) {
+	var res *resty.Response
+	var err error
+	var importRes tracker.RootResponse
+	var asyncRes tracker.LegacyAsyncResponse
+
+	isAsync := false
+	if queryParams != nil {
+		isAsync = strings.EqualFold(queryParams["async"], "true")
+	}
+
+	for attempt := 1; attempt <= c.MaxRetries; attempt++ {
+		c.waitForRateSlot()
+
+		req := c.Resty.R().
+			SetContext(ctx).
+			SetBody(payload).
+			SetHeader("Content-Type", "application/json")
+
+		for key, val := range queryParams {
+			req.SetQueryParam(key, val)
+		}
+
+		res, err = req.Post("/trackedEntityInstances")
+		if err != nil {
+			log.WithError(err).WithField("attempt", attempt).Error("Failed to send tracker payload")
+		} else if res.StatusCode() != http.StatusOK && res.StatusCode() != http.StatusCreated {
+			log.WithFields(log.Fields{
+				"status":  res.StatusCode(),
+				"body":    res.String(),
+				"attempt": attempt,
+			}).Error("DHIS2 tracker payload rejected")
+		} else {
+			if isAsync {
+				if err := json.Unmarshal(res.Body(), &asyncRes); err != nil {
+					return nil, res, fmt.Errorf("failed to parse async response: %w", err)
+				}
+				jobID := ""
+				if asyncRes.Response != nil && *asyncRes.Response.ID != "" {
+					jobID = *asyncRes.Response.ID
+				}
+				log.WithField("jobID", jobID).Info("Async tracker import submitted")
+				return &tracker.LegacyTrackerResponse{AsyncResponse: asyncRes}, res, nil
+			} else {
+				if err := json.Unmarshal(res.Body(), &importRes); err != nil {
+					log.WithError(err).Error("Failed to parse tracker import response")
+					return nil, res, fmt.Errorf("failed to parse response: %w", err)
+				}
+				switch importRes.HttpStatusCode {
+				case http.StatusOK, http.StatusCreated, http.StatusAccepted:
+					importMsg := fmt.Sprintf("Importted %d, updated %d, ignored %d, deleted %d,",
+						importRes.Response.ImportCount.Imported,
+						importRes.Response.ImportCount.Updated,
+						importRes.Response.ImportCount.Ignored,
+						importRes.Response.ImportCount.Deleted)
+					log.Infof("%s", importMsg)
+				case http.StatusConflict:
+					importMsg := fmt.Sprintf("Importted %d, updated %d, ignored %d, deleted %d,",
+						importRes.Response.ImportCount.Imported,
+						importRes.Response.ImportCount.Updated,
+						importRes.Response.ImportCount.Ignored,
+						importRes.Response.ImportCount.Deleted)
+					log.Infof("%s", importMsg)
+					if len(importRes.Response.Conflicts) > 0 {
+						msg := fmt.Sprintf("%d Conflicts reported!", len(importRes.Response.Conflicts))
+						for _, conflict := range importRes.Response.Conflicts {
+							msg += fmt.Sprintf("%s: %s\n", *conflict.Object, *conflict.Value)
+						}
+						log.WithField("Conflicts", msg).Info("Conflicts while importing tracker payload")
+					}
+				}
+
+				log.WithField("status", res.Status()).Info("Tracker payload submitted successfully")
+				return &tracker.LegacyTrackerResponse{SyncResponse: importRes}, res, nil
+			}
+		}
+
+		if attempt < c.MaxRetries {
+			delay := c.BaseDelay * time.Duration(1<<uint(attempt-1))
+			log.WithField("delay", delay).Infof("Retrying in %v...", delay)
+			time.Sleep(delay)
+		}
+	}
+
+	return nil, res, fmt.Errorf("failed to submit payload after %d attempts: %w", c.MaxRetries, err)
+}
+
 // SendBatchedTrackerPayload sends a large tracker payload in batches using SendTrackerPayload.
 // It collects all successful responses and continues through retries and failures.
 // If a batch fails, its payload is written to disk for later inspection.
