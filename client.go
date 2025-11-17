@@ -735,5 +735,5 @@ func (c *Client) SearchTrackedEntity(
 		return false, nil
 	}
 
-	return true, instances
+	return len(instances) > 0, instances
 }
