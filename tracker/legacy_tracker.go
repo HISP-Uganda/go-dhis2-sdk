@@ -35,15 +35,12 @@ type RootResponse struct {
 
 // Response represents the main response data.
 type Response struct {
-	ResponseType    string                  `json:"responseType,omitempty"`
-	Status          string                  `json:"status"`
-	Imported        int                     `json:"imported,omitempty"`
-	Updated         int                     `json:"updated,omitempty"`
-	Deleted         int                     `json:"deleted,omitempty"`
-	Ignored         int                     `json:"ignored,omitempty"`
-	ImportCount     schema.ImportCount      `json:"importCount,omitempty"`
-	Conflicts       []schema.ImportConflict `json:"conflicts,omitempty"`
-	ImportOptions   schema.ImportOptions    `json:"importOptions,omitempty"`
-	ImportSummaries []schema.ImportSummary  `json:"importSummaries,omitempty"`
-	Total           int                     `json:"total,omitempty"`
+	ResponseType    string                 `json:"responseType,omitempty"`
+	Status          string                 `json:"status"`
+	Imported        int                    `json:"imported,omitempty"`
+	Updated         int                    `json:"updated,omitempty"`
+	Deleted         int                    `json:"deleted,omitempty"`
+	Ignored         int                    `json:"ignored,omitempty"`
+	ImportSummaries []schema.ImportSummary `json:"importSummaries,omitempty"`
+	Total           int                    `json:"total,omitempty"`
 }
