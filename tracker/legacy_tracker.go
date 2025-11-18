@@ -2,6 +2,8 @@ package tracker
 
 import (
 	"time"
+
+	"github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
 )
 
 type LegacyAsyncResponse struct {
@@ -74,25 +76,57 @@ type ImportOptions struct {
 	SkipCache                   bool                   `json:"skipCache,omitempty"`
 }
 
+type EventResponse struct {
+	ResponseType    string `json:"responseType,omitempty"`
+	Status          string `json:"status,omitempty"`
+	Imported        int    `json:"imported,omitempty"`
+	Updated         int    `json:"updated,omitempty"`
+	Deleted         int    `json:"deleted,omitempty"`
+	Ignored         int    `json:"ignored,omitempty"`
+	ImportSummaries []struct {
+		ResponseType string         `json:"responseType,omitempty"`
+		Status       string         `json:"status,omitempty"`
+		ImportCount  ImportCount    `json:"importCount,omitempty"`
+		Conflicts    ImportConflict `json:"importConflict,omitempty"`
+	} `json:"importSummaries,omitempty"`
+}
+
+type EnrollmentResponse struct {
+	ResponseType    string `json:"responseType,omitempty"`
+	Status          string `json:"status,omitempty"`
+	Imported        int    `json:"imported,omitempty"`
+	Updated         int    `json:"updated,omitempty"`
+	Deleted         int    `json:"deleted,omitempty"`
+	Ignored         int    `json:"ignored,omitempty"`
+	ImportSummaries []struct {
+		ResponseType string         `json:"responseType,omitempty"`
+		Status       string         `json:"status,omitempty"`
+		ImportCount  ImportCount    `json:"importCount,omitempty"`
+		Conflicts    ImportConflict `json:"importConflict,omitempty"`
+		Events       EventResponse
+	} `json:"importSummaries,omitempty"`
+}
+
+var t schema.ImportSummary
+
 type ImportSummary struct {
-	ResponseType    string           `json:"responseType,omitempty"`
-	Status          string           `json:"status,omitempty"`
-	ImportOptions   ImportOptions    `json:"importOptions,omitempty"`
-	ImportCount     ImportCount      `json:"importCount,omitempty"`
-	Conflicts       []ImportConflict `json:"conflicts,omitempty"`
-	RejectedIndexes []any            `json:"rejectedIndexes,omitempty"`
-	Reference       string           `json:"reference,omitempty"`
-	Href            string           `json:"href,omitempty"`
-	Enrollments     *Response        `json:"enrollments,omitempty"`
-	Events          *Response        `json:"events,omitempty"`
+	ResponseType    string              `json:"responseType,omitempty"`
+	Status          string              `json:"status,omitempty"`
+	ImportOptions   ImportOptions       `json:"importOptions,omitempty"`
+	ImportCount     ImportCount         `json:"importCount,omitempty"`
+	Conflicts       []ImportConflict    `json:"conflicts,omitempty"`
+	RejectedIndexes []any               `json:"rejectedIndexes,omitempty"`
+	Reference       string              `json:"reference,omitempty"`
+	Href            string              `json:"href,omitempty"`
+	Enrollments     *EnrollmentResponse `json:"enrollments,omitempty"`
 }
 
 // ImportCount represents the count of imported, updated, ignored, and deleted items.
 type ImportCount struct {
-	Imported int `json:"imported"`
-	Updated  int `json:"updated"`
-	Ignored  int `json:"ignored"`
-	Deleted  int `json:"deleted"`
+	Imported int `json:"imported,omitempty"`
+	Updated  int `json:"updated,omitempty"`
+	Ignored  int `json:"ignored,omitempty"`
+	Deleted  int `json:"deleted,omitempty"`
 }
 
 type ImportConflict struct {

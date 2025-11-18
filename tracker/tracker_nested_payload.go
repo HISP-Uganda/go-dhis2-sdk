@@ -60,6 +60,7 @@ type LegacyNestedTrackedEntity struct {
 
 // LegacyNestedEnrollment represents an enrollment with nested attributes and events.
 type LegacyNestedEnrollment struct {
+	Enrollment            string                    `json:"enrollment,omitempty"`
 	Attributes            []schema.TrackerAttribute `json:"attributes,omitempty"`
 	EnrolledAt            time.Time                 `json:"enrollmentDate"`
 	Events                []LegacyNestedEvent       `json:"events,omitempty"`
