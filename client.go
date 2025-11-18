@@ -822,7 +822,7 @@ func (c *Client) SearchTrackedEntity(
 
 	var instances []tracker.NestedTrackedEntity
 	if err := json.Unmarshal(v, &instances); err != nil {
-		log.Errorf("SearchTE unmarshal error: %v", err)
+		log.WithFields(log.Fields{"Instances": string(v)}).Errorf("SearchTE unmarshal error: %v", err)
 		return false, nil
 	}
 
