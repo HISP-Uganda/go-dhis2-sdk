@@ -1,8 +1,6 @@
 package tracker
 
 import (
-	"time"
-
 	"github.com/HISP-Uganda/go-dhis2-sdk/dhis2/schema"
 )
 
@@ -12,11 +10,11 @@ type LegacyAsyncResponse struct {
 	Status         string `json:"status,omitempty"`
 	Message        string `json:"message,omitempty"`
 	Response       *struct {
-		ID        *string    `json:"id"`
-		Name      *string    `json:"name"`
-		Created   *time.Time `json:"created"`
-		JobType   *string    `json:"jobType"`
-		JobStatus *string    `json:"jobStatus"`
+		ID        *string   `json:"id"`
+		Name      *string   `json:"name"`
+		Created   DHIS2Time `json:"created"`
+		JobType   *string   `json:"jobType"`
+		JobStatus *string   `json:"jobStatus"`
 	} `json:"response,omitempty"`
 }
 
@@ -94,10 +92,10 @@ type EventResponse struct {
 type EnrollmentResponse struct {
 	ResponseType    string `json:"responseType,omitempty"`
 	Status          string `json:"status,omitempty"`
-	Imported        int    `json:"imported,omitempty"`
-	Updated         int    `json:"updated,omitempty"`
-	Deleted         int    `json:"deleted,omitempty"`
-	Ignored         int    `json:"ignored,omitempty"`
+	Imported        int    `json:"imported"`
+	Updated         int    `json:"updated"`
+	Deleted         int    `json:"deleted"`
+	Ignored         int    `json:"ignored"`
 	ImportSummaries []struct {
 		ResponseType string         `json:"responseType,omitempty"`
 		Status       string         `json:"status,omitempty"`
@@ -123,10 +121,10 @@ type ImportSummary struct {
 
 // ImportCount represents the count of imported, updated, ignored, and deleted items.
 type ImportCount struct {
-	Imported int `json:"imported,omitempty"`
-	Updated  int `json:"updated,omitempty"`
-	Ignored  int `json:"ignored,omitempty"`
-	Deleted  int `json:"deleted,omitempty"`
+	Imported int `json:"imported"`
+	Updated  int `json:"updated"`
+	Ignored  int `json:"ignored"`
+	Deleted  int `json:"deleted"`
 }
 
 type ImportConflict struct {
