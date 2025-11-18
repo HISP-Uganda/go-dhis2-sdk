@@ -26,16 +26,16 @@ type LegacyTrackerResponse struct {
 }
 
 type RootResponse struct {
-	HttpStatus     string   `json:"httpStatus"`
-	HttpStatusCode int      `json:"httpStatusCode"`
-	Status         string   `json:"status"`
-	Message        string   `json:"message"`
-	Response       Response `json:"response"`
+	HttpStatus     string   `json:"httpStatus,omitempty"`
+	HttpStatusCode int      `json:"httpStatusCode,omitempty"`
+	Status         string   `json:"status,omitempty"`
+	Message        string   `json:"message,omitempty"`
+	Response       Response `json:"response,omitempty"`
 }
 
 // Response represents the main response data.
 type Response struct {
-	ResponseType    string                  `json:"responseType"`
+	ResponseType    string                  `json:"responseType,omitempty"`
 	Status          string                  `json:"status"`
 	Imported        int                     `json:"imported,omitempty"`
 	Updated         int                     `json:"updated,omitempty"`
@@ -43,7 +43,7 @@ type Response struct {
 	Ignored         int                     `json:"ignored,omitempty"`
 	ImportCount     schema.ImportCount      `json:"importCount,omitempty"`
 	Conflicts       []schema.ImportConflict `json:"conflicts,omitempty"`
-	ImportOptions   schema.ImportOptions    `json:"importOptions"`
-	ImportSummaries []schema.ImportSummary  `json:"importSummaries"`
+	ImportOptions   schema.ImportOptions    `json:"importOptions,omitempty"`
+	ImportSummaries []schema.ImportSummary  `json:"importSummaries,omitempty"`
 	Total           int                     `json:"total,omitempty"`
 }

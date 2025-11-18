@@ -51,21 +51,23 @@ type LegacyNestedPayload struct {
 
 // LegacyNestedTrackedEntity represents a tracked entity with nested enrollments.
 type LegacyNestedTrackedEntity struct {
-	Attributes        []TrackedEntityAttribute `json:"attributes,omitempty"`
-	Enrollments       []LegacyNestedEnrollment `json:"enrollments,omitempty"`
-	OrgUnit           string                   `json:"orgUnit"`
-	TrackedEntityType string                   `json:"trackedEntityType"`
+	Attributes            []TrackedEntityAttribute `json:"attributes,omitempty"`
+	Enrollments           []LegacyNestedEnrollment `json:"enrollments,omitempty"`
+	OrgUnit               string                   `json:"orgUnit"`
+	TrackedEntityType     string                   `json:"trackedEntityType"`
+	TrackedEntityInstance string                   `json:"trackedEntityInstance,omitempty"`
 }
 
 // LegacyNestedEnrollment represents an enrollment with nested attributes and events.
 type LegacyNestedEnrollment struct {
-	Attributes []schema.TrackerAttribute `json:"attributes,omitempty"`
-	EnrolledAt time.Time                 `json:"enrollmentDate"`
-	Events     []LegacyNestedEvent       `json:"events,omitempty"`
-	OccurredAt time.Time                 `json:"incidentDate"`
-	OrgUnit    string                    `json:"orgUnit"`
-	Program    string                    `json:"program"`
-	Status     string                    `json:"status"`
+	Attributes            []schema.TrackerAttribute `json:"attributes,omitempty"`
+	EnrolledAt            time.Time                 `json:"enrollmentDate"`
+	Events                []LegacyNestedEvent       `json:"events,omitempty"`
+	OccurredAt            time.Time                 `json:"incidentDate"`
+	OrgUnit               string                    `json:"orgUnit"`
+	Program               string                    `json:"program"`
+	Status                string                    `json:"status"`
+	TrackedEntityInstance string                    `json:"trackedEntityInstance,omitempty"`
 }
 
 // LegacyNestedEvent represents an event with nested data values and notes.
@@ -81,6 +83,7 @@ type LegacyNestedEvent struct {
 	ProgramStage             string               `json:"programStage"`
 	ScheduledAt              *time.Time           `json:"dueDate,omitempty"`
 	Status                   string               `json:"status"`
+	TrackedEntityInstance    string               `json:"trackedEntityInstance,omitempty"`
 }
 
 // NestedPayload represents the top-level structure of a nested payload for DHIS2 tracker data import.
