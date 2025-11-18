@@ -814,7 +814,7 @@ func (c *Client) SearchTrackedEntity(
 	}
 
 	// Extract "instances" array
-	v, _, _, err := jsonparser.Get(resp.Body(), "instances")
+	v, _, _, err := jsonparser.Get(resp.Body(), "trackedEntities")
 	if err != nil {
 		log.Errorf("SearchTE error getting instances: %v", err)
 		return false, nil
