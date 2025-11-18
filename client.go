@@ -427,24 +427,27 @@ func (c *Client) SendLegacyTrackerPayload(ctx context.Context, payload *tracker.
 				switch importRes.HttpStatusCode {
 				case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 					importMsg := fmt.Sprintf("Importted %d, updated %d, ignored %d, deleted %d,",
-						importRes.Response.ImportCount.Imported,
-						importRes.Response.ImportCount.Updated,
-						importRes.Response.ImportCount.Ignored,
-						importRes.Response.ImportCount.Deleted)
+						importRes.Response.Imported,
+						importRes.Response.Updated,
+						importRes.Response.Ignored,
+						importRes.Response.Deleted)
 					log.Infof("%s", importMsg)
 				case http.StatusConflict:
 					importMsg := fmt.Sprintf("Importted %d, updated %d, ignored %d, deleted %d,",
-						importRes.Response.ImportCount.Imported,
-						importRes.Response.ImportCount.Updated,
-						importRes.Response.ImportCount.Ignored,
-						importRes.Response.ImportCount.Deleted)
+						importRes.Response.Imported,
+						importRes.Response.Updated,
+						importRes.Response.Ignored,
+						importRes.Response.Deleted)
 					log.Infof("%s", importMsg)
-					if len(importRes.Response.Conflicts) > 0 {
-						msg := fmt.Sprintf("%d Conflicts reported!", len(importRes.Response.Conflicts))
-						for _, conflict := range importRes.Response.Conflicts {
-							msg += fmt.Sprintf("%s: %s\n", *conflict.Object, *conflict.Value)
+					if len(importRes.Response.ImportSummaries) > 0 {
+						for _, summary := range importRes.Response.ImportSummaries {
+							conflicts := summary.Conflicts
+							msg := fmt.Sprintf("%d Conflicts reported!", len(conflicts))
+							for _, conflict := range conflicts {
+								msg += fmt.Sprintf("%s: %s\n", *conflict.Object, *conflict.Value)
+							}
+							log.WithField("Conflicts", msg).Info("Conflicts while importing tracker payload")
 						}
-						log.WithField("Conflicts", msg).Info("Conflicts while importing tracker payload")
 					}
 				}
 
