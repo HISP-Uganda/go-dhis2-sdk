@@ -784,7 +784,7 @@ func (c *Client) SearchTrackedEntity(
 	program string,
 	attrs map[string]string, // attributeUID → value
 	operator string,
-) (bool, []tracker.NestedPayload) {
+) (bool, []schema.TrackerTrackedEntity) {
 	// Must use url.Values to support multiple "filter" params
 	params := url.Values{}
 	params.Set("orgUnit", orgUnit)
@@ -814,13 +814,13 @@ func (c *Client) SearchTrackedEntity(
 	}
 
 	// Extract "instances" array
-	v, _, _, err := jsonparser.Get(resp.Body(), "trackedEntities")
+	v, _, _, err := jsonparser.Get(resp.Body(), "instances")
 	if err != nil {
 		log.Errorf("SearchTE error getting instances: %v", err)
 		return false, nil
 	}
 
-	var instances []tracker.NestedPayload
+	var instances []schema.TrackerTrackedEntity
 	if err := json.Unmarshal(v, &instances); err != nil {
 		log.WithFields(log.Fields{"Instances": string(v)}).Errorf("SearchTE unmarshal error: %v", err)
 		return false, nil

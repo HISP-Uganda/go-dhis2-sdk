@@ -24,6 +24,7 @@ type Entity struct {
 	ErrorReports []TrackerImportError `json:"errorReports,omitempty"`
 	TrackerType  TrackerType          `json:"trackerType"`
 	Uid          *string              `json:"uid,omitempty"`
+	Index        int                  `json:"index,omitempty"`
 }
 
 type _Entity Entity
